@@ -1,3 +1,6 @@
+from queue import SimpleQueue 
+import random
+
 class User:
     def __init__(self, name):
         self.name = name
@@ -5,9 +8,10 @@ class User:
 class SocialGraph:
     def __init__(self):
         self.last_id = 0
-        self.users = {}
-        self.friendships = {}
+        self.users = {} # Nodes
+        self.friendships = {} # Edges
 
+    # Adding Edge
     def add_friendship(self, user_id, friend_id):
         """
         Creates a bi-directional friendship
@@ -20,6 +24,7 @@ class SocialGraph:
             self.friendships[user_id].add(friend_id)
             self.friendships[friend_id].add(user_id)
 
+    # Adding User
     def add_user(self, name):
         """
         Create a new user with a sequential integer ID
@@ -45,8 +50,30 @@ class SocialGraph:
         # !!!! IMPLEMENT ME
 
         # Add users
+        for i in range(num_users):
+            self.add_user(f'User {i}')
 
         # Create friendships
+        # Generate all possible friendship combinations
+        possible_friendships = []
+
+        # Avoid duplicates by ensuring the first number is smaller than the second
+        # There are 10 users, for each of them append a tuple of the ('user_id', 'friend_id
+        for user_id in self.users:
+            # range being from existing user_id+1 (to avoid existing user_id) to self.last_id+1
+            # (otherwise range will stop 1 short)
+            for friend_id in range(user_id + 1, self.last_id + 1):
+                possible_friendships.append((user_id, friend_id))
+
+        # Shuffle the possible friendships
+        random.shuffle(possible_friendships)
+
+        # Create friendships for the first X pairs of the list
+        # X is determined by the formula: num_users * avg_friendships // 2
+        # We need to divide by 2 since each add_friendship() creates 2 friendships
+        for i in range(num_users * avg_friendships // 2):
+            friendship = possible_friendships[i]
+            self.add_friendship(friendship[0], friendship[1])
 
     def get_all_social_paths(self, user_id):
         """
@@ -59,6 +86,25 @@ class SocialGraph:
         """
         visited = {}  # Note that this is a dictionary, not a set
         # !!!! IMPLEMENT ME
+        # use a queue(bfs) to get shortest friendship path
+        # ------------------------------------------------
+        paths = SimpleQueue()
+        # add item to the queue(which is a dictionary of paths)
+        paths.put(user_id)
+        # store a queue of the paths
+        while not paths.empty():
+            current = paths.get()
+            if current not in visited:
+                visited[current] = [current]
+                # else, look at all the neigbors, and add new paths to the queue
+                for neighbor in self.friendships[current]:
+                    if neighbor not in visited:
+                        paths.put(neighbor)
+                        new_path = visited[current]+[neighbor]
+                        visited[neighbor] = new_path
+
+
+
         return visited
 
 
